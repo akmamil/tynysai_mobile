@@ -18,7 +18,7 @@
 abstract final class AppEnv {
   // Which environment are we in?
   static const String env =
-      String.fromEnvironment('ENV', defaultValue: 'production');
+      String.fromEnvironment('ENV', defaultValue: 'mock');
 
   // All traffic goes here (gateway in prod, postman mock in dev)
   static const String gatewayBaseUrl = String.fromEnvironment(
