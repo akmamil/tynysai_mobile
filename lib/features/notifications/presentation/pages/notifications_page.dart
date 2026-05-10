@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/app_theme.dart';
 import '../../../../core/models/notification.dart';
 import '../../../../shared/widgets/empty_state_view.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -17,15 +18,12 @@ class NotificationsPage extends ConsumerWidget {
     final state = ref.watch(notificationsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FF),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Notifications'),
-        backgroundColor: const Color(0xFF1A73E8),
-        foregroundColor: Colors.white,
-        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_outlined, size: 20),
             onPressed: () => ref.invalidate(notificationsProvider),
           ),
         ],
@@ -41,10 +39,11 @@ class NotificationsPage extends ConsumerWidget {
             return const EmptyStateView(
               icon: Icons.notifications_none_outlined,
               title: 'No notifications yet',
-              subtitle: 'You\'ll see updates about your X-ray analyses here.',
+              subtitle: 'Updates about your X-ray analyses will appear here.',
             );
           }
           return RefreshIndicator(
+            color: AppColors.primary,
             onRefresh: () async => ref.invalidate(notificationsProvider),
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
@@ -61,12 +60,6 @@ class NotificationsPage extends ConsumerWidget {
     );
   }
 
-  // ── FIXED: markAsRead wired on tap ─────────────────────────────────────────
-  // Fire-and-forget: POST /api/notifications/{id}/read runs in background.
-  // On success, invalidate the provider so the list reloads with updated
-  // read states from the server. Failures are silently ignored — the UI
-  // already showed the item as "read" by navigating away from it.
-  // ───────────────────────────────────────────────────────────────────────────
   void _handleTap(BuildContext context, WidgetRef ref, AppNotification n) {
     ref
         .read(notificationsDatasourceProvider)
@@ -91,82 +84,119 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isUnread = !notification.read;
+    final iconConfig = _iconFor(notification.type);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: notification.read ? Colors.white : const Color(0xFFE8F0FE),
-          borderRadius: BorderRadius.circular(12),
-          border: notification.read
-              ? null
-              : Border.all(
-                  color: const Color(0xFF1A73E8).withValues(alpha: 0.3)),
-          boxShadow: [
+          color: isUnread
+              ? AppColors.primary.withValues(alpha: 0.04)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isUnread
+                ? AppColors.primary.withValues(alpha: 0.25)
+                : AppColors.border,
+          ),
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              color: Color(0x06000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
             ),
           ],
         ),
+        padding: const EdgeInsets.all(14),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Type icon
             Container(
-              margin: const EdgeInsets.only(top: 5, right: 10),
-              width: 8,
-              height: 8,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: notification.read
-                    ? Colors.transparent
-                    : const Color(0xFF1A73E8),
+                color: iconConfig.color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: Icon(iconConfig.icon,
+                  color: iconConfig.color, size: 20),
             ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _labelForType(notification.type),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: notification.read
-                          ? FontWeight.w500
-                          : FontWeight.bold,
-                      color: const Color(0xFF1A1A2E),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _labelForType(notification.type),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isUnread
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      if (isUnread)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _subtitleFor(notification),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                      height: 1.4,
-                    ),
+                    style: AppText.bodySm,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     _formatTime(notification.createdAt),
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                    style: AppText.labelSm,
                   ),
                 ],
               ),
             ),
-            if (notification.relatedEntityType == 'XRAY_ANALYSIS')
-              const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+            if (notification.relatedEntityType == 'XRAY_ANALYSIS') ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.chevron_right,
+                  color: AppColors.textTertiary, size: 18),
+            ],
           ],
         ),
       ),
     );
   }
 
+  _IconConfig _iconFor(String type) => switch (type) {
+        'ANALYSIS_COMPLETED' =>
+          const _IconConfig(Icons.check_circle_outline, AppColors.success),
+        'ANALYSIS_REQUIRES_REVIEW' =>
+          const _IconConfig(Icons.rate_review_outlined, AppColors.warning),
+        'ANALYSIS_VALIDATED' =>
+          const _IconConfig(Icons.verified_outlined, AppColors.teal),
+        'ANALYSIS_FAILED' =>
+          const _IconConfig(Icons.error_outline, AppColors.error),
+        'APPOINTMENT_CONFIRMED' =>
+          const _IconConfig(Icons.calendar_today_outlined, AppColors.primary),
+        _ => const _IconConfig(Icons.notifications_outlined, AppColors.primary),
+      };
+
   String _labelForType(String type) => switch (type) {
         'ANALYSIS_COMPLETED' => 'Analysis Complete',
         'ANALYSIS_REQUIRES_REVIEW' => 'Doctor Review Required',
-        'ANALYSIS_VALIDATED' => 'Doctor Validated Result',
+        'ANALYSIS_VALIDATED' => 'Result Validated',
         'ANALYSIS_FAILED' => 'Analysis Failed',
         'APPOINTMENT_CONFIRMED' => 'Appointment Confirmed',
         _ => type
@@ -178,13 +208,14 @@ class _NotificationCard extends StatelessWidget {
   String _subtitleFor(AppNotification n) {
     final params = n.params ?? {};
     return switch (n.type) {
-      'ANALYSIS_COMPLETED' => 'Your X-ray analysis has been completed successfully.',
-      'ANALYSIS_REQUIRES_REVIEW' => 'The AI result requires validation by a doctor.',
+      'ANALYSIS_COMPLETED' => 'Your X-ray analysis completed successfully.',
+      'ANALYSIS_REQUIRES_REVIEW' =>
+        'The AI result requires validation by a doctor.',
       'ANALYSIS_VALIDATED' => params['doctorName'] != null
-          ? 'Dr. ${params['doctorName']} has reviewed your result.'
-          : 'A doctor has reviewed your result.',
+          ? 'Dr. ${params['doctorName']} reviewed your result.'
+          : 'A doctor reviewed your result.',
       'ANALYSIS_FAILED' =>
-        'The analysis could not be completed. Please try uploading again.',
+        'The analysis could not be completed. Please try again.',
       _ => 'Tap to view details.',
     };
   }
@@ -202,4 +233,10 @@ class _NotificationCard extends StatelessWidget {
       return isoString;
     }
   }
+}
+
+class _IconConfig {
+  const _IconConfig(this.icon, this.color);
+  final IconData icon;
+  final Color color;
 }

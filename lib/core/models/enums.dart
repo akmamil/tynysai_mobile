@@ -76,7 +76,7 @@ AnalysisStatus analysisStatusFromJson(String? s) => switch (s) {
       'REQUIRES_REVIEW' => AnalysisStatus.requiresReview,
       'VALIDATED' => AnalysisStatus.validated,
       'FAILED' => AnalysisStatus.failed,
-      _ => AnalysisStatus.pending,
+      _ => AnalysisStatus.failed,
     };
 
 DiseaseType? diseaseTypeFromJson(String? s) => switch (s) {
@@ -96,6 +96,14 @@ DiseaseType? diseaseTypeFromJson(String? s) => switch (s) {
       'OTHER' => DiseaseType.other,
       _ => null,
     };
+
+extension UserRoleX on UserRole {
+  String get displayName => switch (this) {
+    UserRole.patient => 'Patient',
+    UserRole.doctor  => 'Doctor',
+    UserRole.admin   => 'Admin',
+  };
+}
 
 UserRole userRoleFromRealmRoles(List<String> roles) {
   if (roles.contains('ADMIN')) return UserRole.admin;

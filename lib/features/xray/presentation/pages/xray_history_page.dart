@@ -1,6 +1,9 @@
+// lib/features/xray/presentation/pages/xray_history_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/app_theme.dart';
 import '../../../../core/models/xray_analysis.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/file_size_formatter.dart';
@@ -17,25 +20,25 @@ class XrayHistoryPage extends ConsumerWidget {
     final state = ref.watch(xrayListProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FF),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('My X-Rays'),
-        backgroundColor: const Color(0xFF1A73E8),
-        foregroundColor: Colors.white,
-        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_outlined, size: 20),
+            tooltip: 'Refresh',
             onPressed: () => ref.invalidate(xrayListProvider),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/xray/upload'),
-        backgroundColor: const Color(0xFF1A73E8),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.upload_file),
-        label: const Text('Upload X-Ray'),
+        icon: const Icon(Icons.upload_file_outlined, size: 18),
+        label: const Text('Upload X-Ray',
+            style: TextStyle(fontWeight: FontWeight.w600)),
+        elevation: 3,
       ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -48,15 +51,16 @@ class XrayHistoryPage extends ConsumerWidget {
             return EmptyStateView(
               icon: Icons.image_search_outlined,
               title: 'No X-rays yet',
-              subtitle: 'Upload your first X-ray to get an AI analysis.',
+              subtitle: 'Upload your first chest X-ray to get an AI-powered analysis.',
               action: () => context.push('/xray/upload'),
               actionLabel: 'Upload X-Ray',
             );
           }
           return RefreshIndicator(
+            color: AppColors.primary,
             onRefresh: () async => ref.invalidate(xrayListProvider),
             child: ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: page.content.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, i) => _XrayCard(xray: page.content[i]),
@@ -77,58 +81,87 @@ class _XrayCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/xray/${xray.id}'),
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        decoration: AppDecorations.card,
+        padding: const EdgeInsets.all(14),
+        child: Row(
           children: [
-            Row(
-              children: [
-                const Icon(Icons.image_search_outlined,
-                    size: 20, color: Color(0xFF1A73E8)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    xray.originalFileName,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                AnalysisStatusBadge(status: xray.status),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  DateFormatter.formatDateTime(xray.uploadedAt),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  FileSizeFormatter.format(xray.fileSizeBytes),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-            if (xray.aiPrimaryDiagnosisDisplayName != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                xray.aiPrimaryDiagnosisDisplayName!,
-                style: const TextStyle(
-                    fontSize: 13, color: Color(0xFF1A73E8), fontWeight: FontWeight.w500),
+            // Thumbnail icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
+              child: const Icon(Icons.image_outlined,
+                  color: AppColors.primary, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Filename + status
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          xray.originalFileName,
+                          style: AppText.h3.copyWith(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      AnalysisStatusBadge(status: xray.status),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  // Meta row
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule_outlined,
+                          size: 12, color: AppColors.textTertiary),
+                      const SizedBox(width: 3),
+                      Text(
+                        DateFormatter.formatDateTime(xray.uploadedAt),
+                        style: AppText.bodyXs,
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.storage_outlined,
+                          size: 12, color: AppColors.textTertiary),
+                      const SizedBox(width: 3),
+                      Text(
+                        FileSizeFormatter.format(xray.fileSizeBytes),
+                        style: AppText.bodyXs,
+                      ),
+                    ],
+                  ),
+                  // Diagnosis pill (if available)
+                  if (xray.aiPrimaryDiagnosisDisplayName != null) ...[
+                    const SizedBox(height: 7),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        xray.aiPrimaryDiagnosisDisplayName!,
+                        style: AppText.labelSm.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right,
+                color: AppColors.textTertiary, size: 20),
           ],
         ),
       ),

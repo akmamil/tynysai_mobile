@@ -93,14 +93,11 @@ class _SplashPageState extends ConsumerState<SplashPage>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: const Center(
-                  child: Text(
-                    'T',
-                    style: TextStyle(
-                      fontSize: 52,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A73E8),
-                    ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),

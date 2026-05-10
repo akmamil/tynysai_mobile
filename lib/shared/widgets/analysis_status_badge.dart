@@ -1,8 +1,7 @@
 // lib/shared/widgets/analysis_status_badge.dart
 
 import 'package:flutter/material.dart';
-
-// Relative path from lib/shared/widgets/ to lib/core/models/
+import '../../app/app_theme.dart';
 import '../../core/models/enums.dart';
 
 class AnalysisStatusBadge extends StatelessWidget {
@@ -17,39 +16,37 @@ class AnalysisStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final config = _configFor(status);
-    final fontSize = size == BadgeSize.small ? 11.0 : 12.5;
-    final hPad = size == BadgeSize.small ? 8.0 : 10.0;
-    final vPad = size == BadgeSize.small ? 3.0 : 5.0;
+    final cfg = _config(status);
+    final fontSize = size == BadgeSize.small ? 10.5 : 12.0;
+    final hPad = size == BadgeSize.small ? 7.0 : 9.0;
+    final vPad = size == BadgeSize.small ? 3.0 : 4.0;
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
       decoration: BoxDecoration(
-        color: config.background,
+        color: cfg.background,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cfg.dotColor.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (config.animate)
-            _PulsingDot(color: config.dotColor)
-          else
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: config.dotColor,
-                shape: BoxShape.circle,
-              ),
-            ),
+          cfg.animate
+              ? _PulsingDot(color: cfg.dotColor, size: 6)
+              : Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                      color: cfg.dotColor, shape: BoxShape.circle),
+                ),
           const SizedBox(width: 5),
           Text(
-            config.label,
+            cfg.label,
             style: TextStyle(
-              color: config.textColor,
+              color: cfg.textColor,
               fontSize: fontSize,
               fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
+              letterSpacing: 0.1,
             ),
           ),
         ],
@@ -57,44 +54,44 @@ class AnalysisStatusBadge extends StatelessWidget {
     );
   }
 
-  _BadgeConfig _configFor(AnalysisStatus status) => switch (status) {
-        AnalysisStatus.pending => _BadgeConfig(
+  _BadgeConfig _config(AnalysisStatus status) => switch (status) {
+        AnalysisStatus.pending => const _BadgeConfig(
             label: 'Pending',
-            background: Colors.amber.shade50,
-            textColor: Colors.amber.shade800,
-            dotColor: Colors.amber.shade600,
+            background: AppColors.pendingBg,
+            textColor: AppColors.pendingText,
+            dotColor: AppColors.pendingDot,
             animate: true,
           ),
-        AnalysisStatus.processing => _BadgeConfig(
+        AnalysisStatus.processing => const _BadgeConfig(
             label: 'Processing',
-            background: Colors.blue.shade50,
-            textColor: Colors.blue.shade800,
-            dotColor: Colors.blue.shade600,
+            background: AppColors.processingBg,
+            textColor: AppColors.processingText,
+            dotColor: AppColors.processingDot,
             animate: true,
           ),
-        AnalysisStatus.completed => _BadgeConfig(
+        AnalysisStatus.completed => const _BadgeConfig(
             label: 'Completed',
-            background: Colors.green.shade50,
-            textColor: Colors.green.shade800,
-            dotColor: Colors.green.shade600,
+            background: AppColors.completedBg,
+            textColor: AppColors.completedText,
+            dotColor: AppColors.completedDot,
           ),
-        AnalysisStatus.requiresReview => _BadgeConfig(
+        AnalysisStatus.requiresReview => const _BadgeConfig(
             label: 'Review Needed',
-            background: Colors.orange.shade50,
-            textColor: Colors.orange.shade800,
-            dotColor: Colors.orange.shade600,
+            background: AppColors.reviewBg,
+            textColor: AppColors.reviewText,
+            dotColor: AppColors.reviewDot,
           ),
-        AnalysisStatus.validated => _BadgeConfig(
+        AnalysisStatus.validated => const _BadgeConfig(
             label: 'Validated',
-            background: const Color(0xFFE8F5E9),
-            textColor: const Color(0xFF2E7D32),
-            dotColor: const Color(0xFF43A047),
+            background: AppColors.validatedBg,
+            textColor: AppColors.validatedText,
+            dotColor: AppColors.validatedDot,
           ),
-        AnalysisStatus.failed => _BadgeConfig(
+        AnalysisStatus.failed => const _BadgeConfig(
             label: 'Failed',
-            background: Colors.red.shade50,
-            textColor: Colors.red.shade800,
-            dotColor: Colors.red.shade600,
+            background: AppColors.failedBg,
+            textColor: AppColors.failedText,
+            dotColor: AppColors.failedDot,
           ),
       };
 }
@@ -109,7 +106,6 @@ class _BadgeConfig {
     required this.dotColor,
     this.animate = false,
   });
-
   final String label;
   final Color background;
   final Color textColor;
@@ -118,8 +114,9 @@ class _BadgeConfig {
 }
 
 class _PulsingDot extends StatefulWidget {
-  const _PulsingDot({required this.color});
+  const _PulsingDot({required this.color, required this.size});
   final Color color;
+  final double size;
 
   @override
   State<_PulsingDot> createState() => _PulsingDotState();
@@ -134,12 +131,10 @@ class _PulsingDotState extends State<_PulsingDot>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+        vsync: this, duration: const Duration(milliseconds: 900))
+      ..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.35, end: 1.0)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -149,17 +144,13 @@ class _PulsingDotState extends State<_PulsingDot>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _anim,
-      child: Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color: widget.color,
-          shape: BoxShape.circle,
+  Widget build(BuildContext context) => FadeTransition(
+        opacity: _anim,
+        child: Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+              color: widget.color, shape: BoxShape.circle),
         ),
-      ),
-    );
-  }
+      );
 }

@@ -18,18 +18,18 @@
 abstract final class AppEnv {
   // Which environment are we in?
   static const String env =
-      String.fromEnvironment('ENV', defaultValue: 'mock');
+      String.fromEnvironment('ENV', defaultValue: 'production');
 
   // All traffic goes here (gateway in prod, postman mock in dev)
   static const String gatewayBaseUrl = String.fromEnvironment(
     'GATEWAY_URL',
-    defaultValue: 'https://YOUR_POSTMAN_MOCK_ID.mock.pstmn.io',
+    defaultValue: 'https://024354f0-4c9e-4389-ac59-8b9c625cb9cb.mock.pstmn.io',
   );
 
   // Keycloak token endpoint base (in mock, this is also Postman)
   static const String keycloakBaseUrl = String.fromEnvironment(
     'KEYCLOAK_URL',
-    defaultValue: 'https://YOUR_POSTMAN_MOCK_ID.mock.pstmn.io',
+    defaultValue: 'https://024354f0-4c9e-4389-ac59-8b9c625cb9cb.mock.pstmn.io',
   );
 
   // When true, auth datasource uses MockAuthDatasource instead of real Keycloak

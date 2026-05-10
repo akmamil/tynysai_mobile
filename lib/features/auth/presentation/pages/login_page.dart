@@ -1,20 +1,11 @@
+// lib/features/auth/presentation/pages/login_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../app/app_theme.dart';
 import '../../domain/auth_state.dart';
 import '../providers/auth_provider.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LoginPage
-//
-// Like SplashPage, this page does NOT navigate directly.
-// When login() succeeds and state becomes AuthAuthenticated, the GoRouter
-// redirect in RouterNotifier fires automatically and pushes '/home'.
-//
-// The page only needs to:
-//   1. Show the login form.
-//   2. Dispatch the login() action.
-//   3. Show loading/error states.
-// ─────────────────────────────────────────────────────────────────────────────
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
@@ -37,10 +28,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _submit() {
     if (_formKey.currentState?.validate() != true) return;
-
-    // Clear any previous error before new attempt.
     ref.read(authProvider.notifier).clearError();
-
     ref.read(authProvider.notifier).login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
@@ -49,197 +37,215 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    // watch (not listen) because we use the state to drive UI.
-    // The router handles navigation — we only need to render loading/error.
     final authState = ref.watch(authProvider);
     final isLoading = authState is AuthLoading;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header ─────────────────────────────────────────────────
-                const SizedBox(height: 32),
-                Center(
-                  child: Container(
+      // Full-screen dark gradient background — matches web's dark brand feel
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppGradients.navy),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 56),
+
+                  // ── Logo + brand ──────────────────────────────────────────
+                  Container(
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A73E8),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'T',
-                        style: TextStyle(
-                          fontSize: 38,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x664664E0),
+                          blurRadius: 24,
+                          offset: Offset(0, 8),
                         ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'Welcome back',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A2E),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Sign in to your TynysAI account',
-                  style: TextStyle(fontSize: 15, color: Colors.grey),
-                ),
-                const SizedBox(height: 40),
-
-                // ── Email field ────────────────────────────────────────────
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autocorrect: false,
-                  enabled: !isLoading,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
-                    if (!v.contains('@')) return 'Enter a valid email';
-                    return null;
-                  },
-                  onChanged: (_) {
-                    // Clear stale error when user edits the form.
-                    if (authState is AuthError) {
-                      ref.read(authProvider.notifier).clearError();
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // ── Password field ─────────────────────────────────────────
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: !_passwordVisible,
-                  textInputAction: TextInputAction.done,
-                  enabled: !isLoading,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outlined),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _passwordVisible
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                      ),
-                      onPressed: () =>
-                          setState(() => _passwordVisible = !_passwordVisible),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'TynysAI',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Password must be at least 6 characters';
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _submit(),
-                ),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 6),
+                  Text(
+                    'AI-Powered Medical Diagnostics',
+                    style: AppText.onDarkMuted.copyWith(fontSize: 14),
+                  ),
+                  const SizedBox(height: 40),
 
-                // ── Error message ──────────────────────────────────────────
-                if (authState is AuthError)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                  // ── White form card ───────────────────────────────────────
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 40,
+                          offset: Offset(0, 16),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(28),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Sign in', style: AppText.displayMd),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Enter your credentials to continue',
+                            style: AppText.bodySm,
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Email
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            autocorrect: false,
+                            enabled: !isLoading,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              prefixIcon: Icon(Icons.email_outlined, size: 20),
+                            ),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Email is required';
+                              }
+                              if (!v.contains('@')) return 'Enter a valid email';
+                              return null;
+                            },
+                            onChanged: (_) {
+                              if (authState is AuthError) {
+                                ref.read(authProvider.notifier).clearError();
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Password
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: !_passwordVisible,
+                            textInputAction: TextInputAction.done,
+                            enabled: !isLoading,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              prefixIcon:
+                                  const Icon(Icons.lock_outlined, size: 20),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _passwordVisible
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  size: 20,
+                                  color: AppColors.textSecondary,
+                                ),
+                                onPressed: () => setState(
+                                    () => _passwordVisible = !_passwordVisible),
+                              ),
+                            ),
+                            validator: (v) {
+                              if (v == null || v.isEmpty) {
+                                return 'Password is required';
+                              }
+                              if (v.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                            onFieldSubmitted: (_) => _submit(),
+                          ),
+
+                          // Error banner
+                          if (authState is AuthError) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: const Color(0xFFFECACA)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.error_outline,
+                                      color: AppColors.error, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      authState.message,
+                                      style: AppText.bodySm.copyWith(
+                                          color: AppColors.error),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+
+                          // Gradient sign-in button
+                          GradientButton(
+                            label: 'Sign In',
+                            isLoading: isLoading,
+                            onPressed: isLoading ? null : _submit,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Mock credentials hint (demo only) ─────────────────────
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12)),
+                    ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline,
-                            color: Colors.red, size: 16),
-                        const SizedBox(width: 6),
+                        const Text('🧪 ', style: TextStyle(fontSize: 14)),
                         Expanded(
                           child: Text(
-                            authState.message,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 13,
-                            ),
+                            'patient@tynysai.kz / test1234',
+                            style: AppText.onDarkMuted.copyWith(fontSize: 12),
                           ),
                         ),
                       ],
                     ),
                   ),
-
-                const SizedBox(height: 24),
-
-                // ── Submit button ──────────────────────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A73E8),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            'Sign In',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                ),
-
-                // ── Debug helper (remove before production) ───────────────
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '🧪 Mock credentials',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                      SizedBox(height: 4),
-                      Text('patient@tynysai.kz / test1234',
-                          style: TextStyle(fontSize: 12)),
-                      Text('doctor@tynysai.kz / test1234',
-                          style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ),
-              ],
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
         ),

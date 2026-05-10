@@ -18,7 +18,7 @@ class DoctorProfile {
     this.bio,
     this.education,
     required this.approved,
-    this.workSchedule,        // ← Map, not String
+    this.workSchedule,        
     this.profileCreatedAt,
   });
 
