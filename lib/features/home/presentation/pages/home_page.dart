@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/models/enums.dart';
 import '../../../../app/app_theme.dart';
+import '../../../../core/models/enums.dart';
 import '../../../auth/domain/auth_state.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -16,7 +16,8 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final user = authState is AuthAuthenticated ? authState.user : null;
-    final firstName = user?.fullName.split(' ').first ?? 'Patient';
+    final firstName = user?.fullName.split(' ').first ?? '';
+    final role = user?.role ?? UserRole.patient;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -78,7 +79,7 @@ class HomePage extends ConsumerWidget {
                 child: Text(
                   (user?.fullName.isNotEmpty == true)
                       ? user!.fullName[0].toUpperCase()
-                      : 'P',
+                      : '?',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -103,8 +104,7 @@ class HomePage extends ConsumerWidget {
                   Icon(Icons.logout_outlined, size: 18, color: AppColors.error),
                   SizedBox(width: 10),
                   Text('Sign Out',
-                      style: TextStyle(
-                          color: AppColors.error, fontSize: 14)),
+                      style: TextStyle(color: AppColors.error, fontSize: 14)),
                 ]),
               ),
             ],
@@ -128,24 +128,24 @@ class HomePage extends ConsumerWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      
                       children: [
-                        
                         Text('Good day,', style: AppText.onDarkMuted),
                         const SizedBox(height: 2),
-                        Text(firstName, style: AppText.onDarkBold),
+                        Text(
+                          firstName.isEmpty ? role.displayName : firstName,
+                          style: AppText.onDarkBold,
+                        ),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
+                              horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(20),
                           ),
+                          // ✅ FIX: role chip reads the real role from JWT
                           child: Text(
-                            user?.role.displayName ?? 'Patient',
+                            role.displayName,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -163,8 +163,11 @@ class HomePage extends ConsumerWidget {
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(Icons.medical_services_outlined,
-                        color: Colors.white, size: 32),
+                    child: Icon(
+                      _roleIcon(role),
+                      color: Colors.white,
+                      size: 32,
+                    ),
                   ),
                 ],
               ),
@@ -174,58 +177,28 @@ class HomePage extends ConsumerWidget {
             Text('Quick Actions', style: AppText.h3),
             const SizedBox(height: 12),
 
-            // ── Navigation grid ────────────────────────────────────────────
-            // childAspectRatio fixed: was 1.35 (too wide/short on 360dp devices)
-            // Now 1.2 for consistent card height across screen sizes.
-            // Reports card added as 5th item → uses 2+3 layout (first row + second row of 3).
-            // Simpler: keep 2-col grid, 5th card (Reports) gets full-width treatment.
+            // ── Role-aware navigation grid ──────────────────────────────
+            // Each role gets cards matching only the routes that exist.
+            // "Coming soon" cards call a snackbar instead of navigating —
+            // no GoException, no crash.
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.20, // ← FIXED from 1.35
-              children: [
-                _NavCard(
-                  icon: Icons.upload_file_outlined,
-                  label: 'Upload X-Ray',
-                  subtitle: 'AI analysis',
-                  color: AppColors.primary,
-                  onTap: () => context.push('/xray/upload'),
-                ),
-                _NavCard(
-                  icon: Icons.history_outlined,
-                  label: 'My X-Rays',
-                  subtitle: 'View history',
-                  color: AppColors.teal,
-                  onTap: () => context.push('/history'),
-                ),
-                _NavCard(
-                  icon: Icons.description_outlined,
-                  label: 'Reports',
-                  subtitle: 'Doctor reports',
-                  color: const Color(0xFF7C3AED), // violet-600
-                  onTap: () => context.push('/reports'),
-                ),
-                _NavCard(
-                  icon: Icons.person_outline,
-                  label: 'Profile',
-                  subtitle: 'Medical info',
-                  color: AppColors.success,
-                  onTap: () => context.push('/profile'),
-                ),
-              ],
+              childAspectRatio: 1.20,
+              children: _buildCards(context, role),
             ),
             const SizedBox(height: 12),
 
-            // ── Notifications card full-width ─────────────────────────────
+            // ── Notifications shortcut (all roles) ────────────────────────
             GestureDetector(
               onTap: () => context.push('/notifications'),
               child: Container(
                 decoration: AppDecorations.card,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Row(
                   children: [
                     Container(
@@ -285,11 +258,11 @@ class HomePage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('How it works',
-                            style: AppText.h3
-                                .copyWith(color: AppColors.primary)),
+                            style:
+                                AppText.h3.copyWith(color: AppColors.primary)),
                         const SizedBox(height: 3),
                         Text(
-                          'Upload a chest X-ray and receive an AI-powered diagnosis in seconds.',
+                          _infoBannerText(role),
                           style: AppText.bodySm,
                         ),
                       ],
@@ -304,8 +277,143 @@ class HomePage extends ConsumerWidget {
       ),
     );
   }
+
+  // ── Card lists per role ─────────────────────────────────────────────────────
+  List<Widget> _buildCards(BuildContext context, UserRole role) {
+    switch (role) {
+      // ── Patient: all four routes exist ──────────────────────────────────
+      case UserRole.patient:
+        return [
+          _NavCard(
+            icon: Icons.upload_file_outlined,
+            label: 'Upload X-Ray',
+            subtitle: 'AI analysis',
+            color: AppColors.primary,
+            onTap: () => context.push('/xray/upload'),
+          ),
+          _NavCard(
+            icon: Icons.history_outlined,
+            label: 'My X-Rays',
+            subtitle: 'View history',
+            color: AppColors.teal,
+            onTap: () => context.push('/history'),
+          ),
+          _NavCard(
+            icon: Icons.description_outlined,
+            label: 'Reports',
+            subtitle: 'Doctor reports',
+            color: const Color(0xFF7C3AED),
+            onTap: () => context.push('/reports'),
+          ),
+          _NavCard(
+            icon: Icons.person_outline,
+            label: 'Profile',
+            subtitle: 'Medical info',
+            color: AppColors.success,
+            onTap: () => context.push('/profile'),
+          ),
+        ];
+
+      // ── Doctor: existing routes + coming-soon stubs ────────────────────
+      case UserRole.doctor:
+        return [
+          _NavCard(
+            icon: Icons.image_search_outlined,
+            label: 'My X-Rays',
+            subtitle: 'Assigned scans',
+            color: AppColors.primary,
+            onTap: () => context.push('/history'),
+          ),
+          _NavCard(
+            icon: Icons.description_outlined,
+            label: 'Reports',
+            subtitle: 'My reports',
+            color: const Color(0xFF7C3AED),
+            onTap: () => context.push('/reports'),
+          ),
+          _NavCard(
+            icon: Icons.person_outline,
+            label: 'Profile',
+            subtitle: 'My account',
+            color: AppColors.success,
+            onTap: () => context.push('/profile'),
+          ),
+          // Coming soon — shows a SnackBar instead of navigating.
+          // Replace onTap with context.push('/doctor/validate') in Sprint 4.
+          _NavCard(
+            icon: Icons.check_circle_outline,
+            label: 'Validate',
+            subtitle: 'Coming soon',
+            color: AppColors.warning,
+            onTap: () => _showComingSoon(context, 'Doctor Validate screen'),
+          ),
+        ];
+
+      // ── Admin: existing routes + coming-soon stubs ─────────────────────
+      case UserRole.admin:
+        return [
+          _NavCard(
+            icon: Icons.person_outline,
+            label: 'Profile',
+            subtitle: 'My account',
+            color: AppColors.success,
+            onTap: () => context.push('/profile'),
+          ),
+          _NavCard(
+            icon: Icons.people_outline,
+            label: 'Users',
+            subtitle: 'Coming soon',
+            color: AppColors.primary,
+            onTap: () => _showComingSoon(context, 'User Management screen'),
+          ),
+          _NavCard(
+            icon: Icons.verified_outlined,
+            label: 'Approvals',
+            subtitle: 'Coming soon',
+            color: AppColors.teal,
+            onTap: () => _showComingSoon(context, 'Doctor Approvals screen'),
+          ),
+          _NavCard(
+            icon: Icons.bar_chart_outlined,
+            label: 'Statistics',
+            subtitle: 'Coming soon',
+            color: const Color(0xFF7C3AED),
+            onTap: () => _showComingSoon(context, 'Admin Dashboard screen'),
+          ),
+        ];
+    }
+  }
+
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature is coming in the next sprint.'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  IconData _roleIcon(UserRole role) => switch (role) {
+        UserRole.patient => Icons.medical_services_outlined,
+        UserRole.doctor => Icons.medical_services_outlined,
+        UserRole.admin => Icons.admin_panel_settings_outlined,
+      };
+
+  String _infoBannerText(UserRole role) => switch (role) {
+        UserRole.patient =>
+          'Upload a chest X-ray and receive an AI-powered diagnosis in seconds.',
+        UserRole.doctor =>
+          'Review assigned X-ray analyses, validate AI results, and create diagnostic reports.',
+        UserRole.admin =>
+          'Manage users, approve doctor registrations, and monitor platform activity.',
+      };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// _NavCard — shared quick-action card
+// ─────────────────────────────────────────────────────────────────────────────
 class _NavCard extends StatelessWidget {
   const _NavCard({
     required this.icon,

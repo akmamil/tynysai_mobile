@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/domain/auth_state.dart';
-import '../core/models/enums.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
@@ -13,7 +12,8 @@ import '../features/home/presentation/pages/home_page.dart';
 import '../features/notifications/presentation/pages/notifications_page.dart';
 import '../features/profile/presentation/pages/edit_profile_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
-import '../features/reports/presentation/pages/reports_page.dart'; 
+import '../features/reports/presentation/pages/report_detail_page.dart';
+import '../features/reports/presentation/pages/reports_page.dart';
 import '../features/xray/presentation/pages/upload_xray_page.dart';
 import '../features/xray/presentation/pages/xray_history_page.dart';
 import '../features/xray/presentation/pages/xray_result_page.dart';
@@ -41,14 +41,13 @@ class RouterNotifier extends ChangeNotifier {
     final isOnAuthRoute = loc == '/login' || loc == '/register';
 
     if (isInitializing) return isOnSplash ? null : '/';
-    if (isAuthenticated && (isOnSplash || isOnAuthRoute)) {
-      final authState = _authState as AuthAuthenticated;
-      return switch (authState.user.role) {
-        UserRole.doctor => '/doctor/home',
-        UserRole.admin  => '/admin/home',
-        _               => '/home',
-      };
-    }
+
+    // ── SAFE role redirect ────────────────────────────────────────────────
+    // All roles land on /home. Role-specific content is rendered inside
+    // HomePage via user.role. This prevents a GoException for missing
+    // /doctor/home and /admin/home routes until those are built.
+    if (isAuthenticated && (isOnSplash || isOnAuthRoute)) return '/home';
+
     if (!isAuthenticated && !isOnAuthRoute) return '/login';
     return null;
   }
@@ -80,20 +79,23 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // ── Reports ────────────────────────────────────────────────────────
       GoRoute(path: '/reports', builder: (_, __) => const ReportsPage()),
-    //   GoRoute(
-    //   path: '/reports/:id',
-    //   builder: (_, state) {
-    //     final id = int.parse(state.pathParameters['id']!);
-    //     return ReportDetailPage(reportId: id);
-    //   },
-    // ),
+      GoRoute(
+        path: '/reports/:id',
+        builder: (_, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return ReportDetailPage(reportId: id);
+        },
+      ),
 
       // ── Profile ────────────────────────────────────────────────────────
       GoRoute(path: '/profile', builder: (_, __) => const ProfilePage()),
-      GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfilePage()),
+      GoRoute(
+          path: '/profile/edit', builder: (_, __) => const EditProfilePage()),
 
       // ── Notifications ──────────────────────────────────────────────────
-      GoRoute(path: '/notifications', builder: (_, __) => const NotificationsPage()),
+      GoRoute(
+          path: '/notifications',
+          builder: (_, __) => const NotificationsPage()),
     ],
   );
 });
