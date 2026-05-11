@@ -306,6 +306,13 @@ class HomePage extends ConsumerWidget {
             onTap: () => context.push('/reports'),
           ),
           _NavCard(
+            icon: Icons.calendar_today_outlined,
+            label: 'Appointments',
+            subtitle: 'Book & manage',
+            color: const Color(0xFF0EA5E9),
+            onTap: () => context.push('/appointments'),
+          ),
+          _NavCard(
             icon: Icons.person_outline,
             label: 'Profile',
             subtitle: 'Medical info',
