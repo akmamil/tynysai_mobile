@@ -47,7 +47,7 @@ class NotificationsRemoteDatasource {
   }
 }
 
-final _mockNotificationsPage = PageResponse<AppNotification>(
+const _mockNotificationsPage = PageResponse<AppNotification>(
   content: [
     AppNotification(
       id: 1,

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/app_theme.dart';
 import '../../domain/auth_state.dart';
 import '../providers/auth_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -243,6 +244,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 16),
+                                    TextButton(
+                                      onPressed: () => context.push('/register'),
+                                      child: Text(
+                                        "Don't have an account? Register",
+                                        style: AppText.onDarkMuted.copyWith(fontSize: 13),
+                                      ),
+                                    ),
+
                   const SizedBox(height: 40),
                 ],
               ),

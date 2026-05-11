@@ -17,6 +17,7 @@ import '../features/reports/presentation/pages/reports_page.dart';
 import '../features/xray/presentation/pages/upload_xray_page.dart';
 import '../features/xray/presentation/pages/xray_history_page.dart';
 import '../features/xray/presentation/pages/xray_result_page.dart';
+import '../features/auth/presentation/pages/register.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RouterNotifier
@@ -64,6 +65,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (_, __) => const SplashPage()),
       GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
+      GoRoute(path: '/register', builder: (_, __) => const RegisterPage()),
       GoRoute(path: '/home', builder: (_, __) => const HomePage()),
 
       // ── X-Ray feature ──────────────────────────────────────────────────

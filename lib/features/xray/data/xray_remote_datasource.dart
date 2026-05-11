@@ -107,7 +107,7 @@ class XrayRemoteDatasource {
 }
 
 // Pre-seeded mock history — mirrors the Postman /api/xrays/patient response.
-final _mockXrayHistoryPage = PageResponse<XrayAnalysis>(
+const _mockXrayHistoryPage = PageResponse<XrayAnalysis>(
   content: [
     XrayAnalysis(
       id: 4,
