@@ -24,6 +24,23 @@ class AppointmentsPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        // ── Back button ───────────────────────────────────────────────────
+        // Uses context.pop() when there is a route to return to (the normal
+        // case: pushed from HomePage via context.push('/appointments')).
+        // Falls back to context.go('/home') for direct-navigation scenarios
+        // (deep links, notifications, fresh sessions) so the user is never
+        // stranded on this screen without a way back.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          tooltip: 'Back',
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+        ),
         title: const Text('My Appointments'),
         actions: [
           IconButton(
