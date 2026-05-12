@@ -10,6 +10,38 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_response.dart';
 import '../../../core/network/dio_client.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BookAppointmentRequest
+// ─────────────────────────────────────────────────────────────────────────────
+// Defined in the data layer so providers can import it without creating a
+// circular dependency (datasource ← provider → datasource).
+
+class BookAppointmentRequest {
+  const BookAppointmentRequest({
+    required this.doctorId,
+    required this.appointmentDate, // 'YYYY-MM-DD'
+    required this.startTime,       // 'HH:mm'
+    required this.endTime,         // 'HH:mm'
+    this.reason,
+  });
+
+  final String doctorId;
+  final String appointmentDate;
+  final String startTime;
+  final String endTime;
+  final String? reason;
+
+  Map<String, dynamic> toJson() => {
+        'doctorId': doctorId,
+        'appointmentDate': appointmentDate,
+        'startTime': startTime,
+        'endTime': endTime,
+        if (reason != null && reason!.isNotEmpty) 'reason': reason,
+      };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 final appointmentsDatasourceProvider =
     Provider<AppointmentsRemoteDatasource>((ref) {
   return AppointmentsRemoteDatasource(
@@ -113,9 +145,52 @@ class AppointmentsRemoteDatasource {
       throw mapDioException(e);
     }
   }
-}
 
-// ── Mock seed data ─────────────────────────────────────────────────────────
+
+  // ── POST /api/appointments ────────────────────────────────────────────────
+  //
+  // Backend: AppointmentController.bookAppointment()
+  // Requires: PATIENT role.
+  // Body: { doctorId, appointmentDate, startTime, endTime, reason? }
+  // Returns the created Appointment with status=SCHEDULED.
+  //
+  // Mock: synthesises a new Appointment object with a fake ID so the success
+  // flow can be exercised end-to-end without a real server.
+  Future<Appointment> bookAppointment(BookAppointmentRequest request) async {
+    if (AppEnv.isMock) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      // Return a synthesised appointment that matches the request.
+      return Appointment(
+        id: DateTime.now().millisecondsSinceEpoch % 100000,
+        patientId: '00000000-0000-0000-0000-000000000001',
+        doctorId: request.doctorId,
+        doctorName: 'Dr. (Mock)',          // real backend fills this from doctorId
+        doctorSpecialization: null,
+        appointmentDate:
+            '${request.appointmentDate}T${request.startTime}:00Z',
+        startTime: request.startTime,
+        endTime: request.endTime,
+        status: AppointmentStatus.scheduled,
+        reason: request.reason,
+        notes: null,
+        meetingLink: null,
+        createdAt: DateTime.now().toIso8601String(),
+        updatedAt: null,
+      );
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiPaths.bookAppointment,
+        data: request.toJson(),
+      );
+      final body = response.data as Map<String, dynamic>;
+      return Appointment.fromJson(body['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
 //
 // Reflects realistic TynysAI appointments:
 // - 2 upcoming (SCHEDULED, future dates)
@@ -200,3 +275,4 @@ final _mockAppointmentsPage = PageResponse<Appointment>(
   isLast: true,
   isFirst: true,
 );
+}

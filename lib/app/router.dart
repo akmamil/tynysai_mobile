@@ -20,6 +20,7 @@ import '../features/xray/presentation/pages/xray_result_page.dart';
 import '../features/auth/presentation/pages/register.dart';
 import '../features/appointments/presentation/pages/appointments_page.dart';
 import '../features/appointments/presentation/pages/appointment_detail_page.dart';
+import '../features/appointments/presentation/pages/book_appointment_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RouterNotifier
@@ -100,6 +101,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/appointments',
           builder: (_, __) => const AppointmentsPage()),
+      GoRoute(
+          path: '/appointments/book',
+          builder: (_, __) => const BookAppointmentPage()),
       GoRoute(
         path: '/appointments/:id',
         builder: (_, state) {
