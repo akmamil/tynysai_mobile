@@ -11,6 +11,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/widgets/analysis_status_badge.dart';
 import '../../../../shared/widgets/confidence_bar.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../shared/widgets/medical_disclaimer_banner.dart'; // ← added
 import '../providers/xray_detail_provider.dart';
 
 class XrayResultPage extends ConsumerWidget {
@@ -81,6 +82,7 @@ class _ResultBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Status / upload date ─────────────────────────────────────────
           AppCard(
             child: Row(
               children: [
@@ -123,53 +125,63 @@ class _ResultBody extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // ── Processing spinner ───────────────────────────────────────────
           if (analysis.status.isProcessing)
-          AppCard(
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 64, height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: SizedBox(
-                      width: 28, height: 28,
-                      child: CircularProgressIndicator(strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(AppColors.primary)),
+            AppCard(
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor:
+                              AlwaysStoppedAnimation(AppColors.primary),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  analysis.status == AnalysisStatus.pending
-                      ? 'Queued for analysis'
-                      : 'AI is analyzing your X-ray',
-                  style: AppText.h3,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'This usually takes 10–30 seconds. Stay on this page.',
-                  style: AppText.bodySm,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: const LinearProgressIndicator(minHeight: 3,
-                    backgroundColor: AppColors.border,
-                    valueColor: AlwaysStoppedAnimation(AppColors.primary)),
-                ),
-                const SizedBox(height: 12),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    analysis.status == AnalysisStatus.pending
+                        ? 'Queued for analysis'
+                        : 'AI is analyzing your X-ray',
+                    style: AppText.h3,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'This usually takes 10–30 seconds. Stay on this page.',
+                    style: AppText.bodySm,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: const LinearProgressIndicator(
+                      minHeight: 3,
+                      backgroundColor: AppColors.border,
+                      valueColor:
+                          AlwaysStoppedAnimation(AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
             ),
-          ),
-          
+
           const SizedBox(height: 16),
 
+          // ── AI Diagnosis ─────────────────────────────────────────────────
           if (analysis.aiPrimaryDiagnosis != null) ...[
             const SectionLabel('AI Diagnosis'),
 
@@ -196,7 +208,6 @@ class _ResultBody extends StatelessWidget {
 
                   if (analysis.aiFindings != null) ...[
                     const SizedBox(height: 16),
-
                     const Text(
                       'Findings',
                       style: TextStyle(
@@ -204,9 +215,7 @@ class _ResultBody extends StatelessWidget {
                         fontSize: 13,
                       ),
                     ),
-
                     const SizedBox(height: 6),
-
                     Text(
                       analysis.aiFindings!,
                       style: const TextStyle(
@@ -219,7 +228,6 @@ class _ResultBody extends StatelessWidget {
 
                   if (analysis.aiDetectedAbnormalities != null) ...[
                     const SizedBox(height: 16),
-
                     const Text(
                       'Detected Abnormalities',
                       style: TextStyle(
@@ -227,9 +235,7 @@ class _ResultBody extends StatelessWidget {
                         fontSize: 13,
                       ),
                     ),
-
                     const SizedBox(height: 6),
-
                     Text(
                       analysis.aiDetectedAbnormalities!,
                       style: const TextStyle(
@@ -241,8 +247,14 @@ class _ResultBody extends StatelessWidget {
                 ],
               ),
             ),
+
+            // ── Medical disclaimer — shown whenever AI results are visible ──
+            const SizedBox(height: 12),
+            const MedicalDisclaimerBanner(),
+            const SizedBox(height: 16),
           ],
 
+          // ── Doctor Validation ────────────────────────────────────────────
           if (analysis.status == AnalysisStatus.validated &&
               analysis.doctorDiagnosis != null) ...[
             const SectionLabel('Doctor Validation'),
@@ -258,9 +270,7 @@ class _ResultBody extends StatelessWidget {
                         color: AppColors.validatedText,
                         size: 20,
                       ),
-
                       const SizedBox(width: 8),
-
                       Expanded(
                         child: Text(
                           analysis.doctorDiagnosisDisplayName ??
@@ -277,7 +287,6 @@ class _ResultBody extends StatelessWidget {
 
                   if (analysis.validatedByDoctorName != null) ...[
                     const SizedBox(height: 8),
-
                     Text(
                       'Validated by ${analysis.validatedByDoctorName}',
                       style: const TextStyle(
@@ -289,7 +298,6 @@ class _ResultBody extends StatelessWidget {
 
                   if (analysis.doctorNotes != null) ...[
                     const SizedBox(height: 16),
-
                     const Text(
                       'Doctor Notes',
                       style: TextStyle(
@@ -297,9 +305,7 @@ class _ResultBody extends StatelessWidget {
                         fontSize: 13,
                       ),
                     ),
-
                     const SizedBox(height: 6),
-
                     Text(
                       analysis.doctorNotes!,
                       style: const TextStyle(
@@ -314,6 +320,7 @@ class _ResultBody extends StatelessWidget {
             ),
           ],
 
+          // ── Awaiting review notice ───────────────────────────────────────
           if (analysis.status == AnalysisStatus.requiresReview)
             AppCard(
               child: const Row(
@@ -323,9 +330,7 @@ class _ResultBody extends StatelessWidget {
                     color: AppColors.warning,
                     size: 24,
                   ),
-
                   SizedBox(width: 12),
-
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,9 +341,7 @@ class _ResultBody extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-
                         SizedBox(height: 4),
-
                         Text(
                           'The AI result requires expert validation before it is final.',
                           style: TextStyle(
@@ -353,6 +356,7 @@ class _ResultBody extends StatelessWidget {
               ),
             ),
 
+          // ── Failed notice ────────────────────────────────────────────────
           if (analysis.status == AnalysisStatus.failed)
             AppCard(
               child: const Row(
@@ -362,9 +366,7 @@ class _ResultBody extends StatelessWidget {
                     color: AppColors.error,
                     size: 24,
                   ),
-
                   SizedBox(width: 12),
-
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,9 +377,7 @@ class _ResultBody extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-
                         SizedBox(height: 4),
-
                         Text(
                           'The AI could not process this image. Please try uploading again.',
                           style: TextStyle(

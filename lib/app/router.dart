@@ -18,6 +18,12 @@ import '../features/xray/presentation/pages/upload_xray_page.dart';
 import '../features/xray/presentation/pages/xray_history_page.dart';
 import '../features/xray/presentation/pages/xray_result_page.dart';
 import '../features/auth/presentation/pages/register.dart';
+import '../features/auth/presentation/pages/register.dart';
+import '../features/appointments/presentation/pages/appointments_page.dart';
+import '../features/appointments/presentation/pages/appointment_detail_page.dart';
+import '../features/appointments/presentation/pages/book_appointment_page.dart';
+import '../features/lab_results/presentation/pages/lab_results_pages.dart';
+import '../features/lab_results/presentation/pages/lab_result_detail_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RouterNotifier
@@ -94,10 +100,37 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/profile/edit', builder: (_, __) => const EditProfilePage()),
 
+      // ── Appointments ────────────────────────────────────────────────────
+      GoRoute(
+          path: '/appointments',
+          builder: (_, __) => const AppointmentsPage()),
+      GoRoute(
+          path: '/appointments/book',
+          builder: (_, __) => const BookAppointmentPage()),
+      GoRoute(
+        path: '/appointments/:id',
+        builder: (_, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return AppointmentDetailPage(appointmentId: id);
+        },
+      ),
+
       // ── Notifications ──────────────────────────────────────────────────
       GoRoute(
           path: '/notifications',
           builder: (_, __) => const NotificationsPage()),
+
+      // ── Lab Results ────────────────────────────────────────────────────
+      GoRoute(
+          path: '/lab-results',
+          builder: (_, __) => const LabResultsPage()),
+      GoRoute(
+        path: '/lab-results/:id',
+        builder: (_, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return LabResultDetailPage(labResultId: id);
+        },
+      ),
     ],
   );
 });
