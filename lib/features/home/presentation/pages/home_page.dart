@@ -313,6 +313,13 @@ class HomePage extends ConsumerWidget {
             onTap: () => context.push('/appointments'),
           ),
           _NavCard(
+            icon: Icons.science_outlined,
+            label: 'Lab Results',
+            subtitle: 'Test results',
+            color: const Color(0xFF0891B2),
+            onTap: () => context.push('/lab-results'),
+          ),
+          _NavCard(
             icon: Icons.person_outline,
             label: 'Profile',
             subtitle: 'Medical info',

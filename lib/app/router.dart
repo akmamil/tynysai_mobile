@@ -21,6 +21,8 @@ import '../features/auth/presentation/pages/register.dart';
 import '../features/appointments/presentation/pages/appointments_page.dart';
 import '../features/appointments/presentation/pages/appointment_detail_page.dart';
 import '../features/appointments/presentation/pages/book_appointment_page.dart';
+import '../features/lab_results/presentation/pages/lab_results_pages.dart';
+import '../features/lab_results/presentation/pages/lab_result_detail_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RouterNotifier
@@ -116,6 +118,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/notifications',
           builder: (_, __) => const NotificationsPage()),
+
+      // ── Lab Results ────────────────────────────────────────────────────
+      GoRoute(
+          path: '/lab-results',
+          builder: (_, __) => const LabResultsPage()),
+      GoRoute(
+        path: '/lab-results/:id',
+        builder: (_, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return LabResultDetailPage(labResultId: id);
+        },
+      ),
     ],
   );
 });
