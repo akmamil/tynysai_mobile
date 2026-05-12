@@ -9,6 +9,7 @@ import '../../../../core/models/diagnostic_report.dart';
 import '../../../../core/models/enums.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../shared/widgets/medical_disclaimer_banner.dart'; // ← added
 import '../providers/reports_provider.dart';
 
 class ReportDetailPage extends ConsumerWidget {
@@ -29,8 +30,7 @@ class ReportDetailPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorView(
           message: e.toString(),
-          onRetry: () =>
-              ref.invalidate(reportDetailProvider(reportId)),
+          onRetry: () => ref.invalidate(reportDetailProvider(reportId)),
         ),
         data: (report) => _ReportBody(report: report),
       ),
@@ -110,6 +110,10 @@ class _ReportBody extends StatelessWidget {
               ],
             ),
           ),
+
+          // ── AI-assisted disclaimer — placed directly after diagnosis ─────
+          const SizedBox(height: 12),
+          const MedicalDisclaimerBanner.aiAssisted(),
           const SizedBox(height: 16),
 
           // ── Clinical Findings ───────────────────────────────────────────
@@ -411,8 +415,7 @@ class _RecRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: AppText.h3.copyWith(fontSize: 13)),
+              Text(title, style: AppText.h3.copyWith(fontSize: 13)),
               const SizedBox(height: 3),
               Text(body,
                   style: AppText.bodyMd.copyWith(
