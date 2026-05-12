@@ -19,25 +19,23 @@ import '../../../core/network/dio_client.dart';
 class BookAppointmentRequest {
   const BookAppointmentRequest({
     required this.doctorId,
-    required this.appointmentDate, // 'YYYY-MM-DD'
-    required this.startTime,       // 'HH:mm'
-    required this.endTime,         // 'HH:mm'
-    this.reason,
+    required this.appointmentDateTime,
+    this.patientComplaints,
+    this.xrayAnalysisId,
   });
 
   final String doctorId;
-  final String appointmentDate;
-  final String startTime;
-  final String endTime;
-  final String? reason;
+  final String appointmentDateTime;
+  final String? patientComplaints;
+  final int? xrayAnalysisId;
 
   Map<String, dynamic> toJson() => {
-        'doctorId': doctorId,
-        'appointmentDate': appointmentDate,
-        'startTime': startTime,
-        'endTime': endTime,
-        if (reason != null && reason!.isNotEmpty) 'reason': reason,
-      };
+    'doctorId': doctorId,
+    'appointmentDate': appointmentDateTime,
+    if (patientComplaints != null && patientComplaints!.isNotEmpty)
+      'patientComplaints': patientComplaints,
+    if (xrayAnalysisId != null) 'xrayAnalysisId': xrayAnalysisId,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -159,19 +157,17 @@ class AppointmentsRemoteDatasource {
   Future<Appointment> bookAppointment(BookAppointmentRequest request) async {
     if (AppEnv.isMock) {
       await Future.delayed(const Duration(milliseconds: 600));
-      // Return a synthesised appointment that matches the request.
       return Appointment(
         id: DateTime.now().millisecondsSinceEpoch % 100000,
         patientId: '00000000-0000-0000-0000-000000000001',
         doctorId: request.doctorId,
-        doctorName: 'Dr. (Mock)',          // real backend fills this from doctorId
+        doctorName: 'Dr. (Mock)',
         doctorSpecialization: null,
-        appointmentDate:
-            '${request.appointmentDate}T${request.startTime}:00Z',
-        startTime: request.startTime,
-        endTime: request.endTime,
+        appointmentDate: request.appointmentDateTime,
+        startTime: null,
+        endTime: null,
         status: AppointmentStatus.scheduled,
-        reason: request.reason,
+        reason: request.patientComplaints,
         notes: null,
         meetingLink: null,
         createdAt: DateTime.now().toIso8601String(),

@@ -1,5 +1,3 @@
-// lib/features/xray/presentation/pages/upload_xray_page.dart
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,7 +7,10 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../app/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../../../shared/widgets/step_indicator.dart'; // ← extracted shared widget
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/l10n/locale_provider.dart';
+import '../../../../shared/widgets/step_indicator.dart';
+import '../../../appointments/data/doctors_remote_datasource.dart';
 import '../providers/xray_upload_provider.dart';
 
 class UploadXrayPage extends ConsumerStatefulWidget {
@@ -21,6 +22,8 @@ class UploadXrayPage extends ConsumerStatefulWidget {
 
 class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
   File? _selectedFile;
+  String? _selectedDoctorId;
+  bool _doctorError = false;
   final _notesController = TextEditingController();
   final _picker = ImagePicker();
 
@@ -53,9 +56,8 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              e.toString().contains('UnimplementedError') ||
-                      e.toString().contains('MissingPluginException')
-                  ? 'Image picker is not supported on this platform. Run on Android or iOS.'
+              e.toString().contains('UnimplementedError') || e.toString().contains('MissingPluginException')
+                  ? 'Image picker is not supported on this platform.'
                   : 'Could not open image picker. Try again.',
             ),
             duration: const Duration(seconds: 4),
@@ -70,8 +72,7 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
       context: context,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
@@ -85,12 +86,10 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
-                width: 42,
-                height: 42,
+                width: 42, height: 42,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.photo_library_outlined,
                     color: AppColors.primary, size: 20),
               ),
@@ -101,12 +100,10 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
-                width: 42,
-                height: 42,
+                width: 42, height: 42,
                 decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                    color: AppColors.teal.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.camera_alt_outlined,
                     color: AppColors.teal, size: 20),
               ),
@@ -125,6 +122,12 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = ref.watch(localeProvider);
+    S.setLocale(AppLocale.values.firstWhere(
+          (e) => e.name == locale.languageCode,
+      orElse: () => AppLocale.ru,
+    ));
+
     final uploadState = ref.watch(xrayUploadProvider);
 
     ref.listen<UploadState>(xrayUploadProvider, (_, next) {
@@ -137,36 +140,24 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Upload X-Ray')),
+      appBar: AppBar(title: Text(S.uploadXray)),
       body: SingleChildScrollView(
         padding: AppSpacing.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── How it works card using shared StepIndicator ───────────────
+            // ── How it works ──────────────────────────────────────────────
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('How it works', style: AppText.h3),
+                  Text(S.howItWorks, style: AppText.h3),
                   const SizedBox(height: 14),
                   const Row(
                     children: [
-                      StepIndicator(
-                        number: 1,
-                        label: 'Upload X-Ray',
-                        sub: 'JPG or PNG\nup to 20 MB',
-                      ),
-                      StepIndicator(
-                        number: 2,
-                        label: 'AI Analyzes',
-                        sub: 'Neural network\nclassifies',
-                      ),
-                      StepIndicator(
-                        number: 3,
-                        label: 'Get Result',
-                        sub: 'Diagnosis +\nconfidence',
-                      ),
+                      StepIndicator(number: 1, label: 'Upload X-Ray', sub: 'JPG or PNG\nup to 20 MB'),
+                      StepIndicator(number: 2, label: 'AI Analyzes', sub: 'Neural network\nclassifies'),
+                      StepIndicator(number: 3, label: 'Get Result', sub: 'Diagnosis +\nconfidence'),
                     ],
                   ),
                 ],
@@ -181,9 +172,7 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
                 height: 220,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: _selectedFile != null
-                      ? Colors.black
-                      : const Color(0xFFF0F4FF),
+                  color: _selectedFile != null ? Colors.black : const Color(0xFFF0F4FF),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: _selectedFile != null
@@ -194,68 +183,114 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
                 ),
                 child: _selectedFile != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Image.file(_selectedFile!, fit: BoxFit.contain),
-                            // Change button overlay
-                            Positioned(
-                              bottom: 10,
-                              right: 10,
-                              child: GestureDetector(
-                                onTap: isUploading ? null : _showSourcePicker,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.swap_horiz_outlined,
-                                          color: Colors.white, size: 14),
-                                      SizedBox(width: 4),
-                                      Text('Change',
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 56,
-                            height: 56,
+                  borderRadius: BorderRadius.circular(15),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.file(_selectedFile!, fit: BoxFit.contain),
+                      Positioned(
+                        bottom: 10, right: 10,
+                        child: GestureDetector(
+                          onTap: isUploading ? null : _showSourcePicker,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.08),
-                              shape: BoxShape.circle,
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(8)),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.swap_horiz_outlined, color: Colors.white, size: 14),
+                                SizedBox(width: 4),
+                                Text('Change', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                              ],
                             ),
-                            child: const Icon(Icons.upload_file_outlined,
-                                size: 28, color: AppColors.primary),
                           ),
-                          const SizedBox(height: 12),
-                          Text('Tap to select X-ray image',
-                              style: AppText.bodyMd
-                                  .copyWith(color: AppColors.textSecondary)),
-                          const SizedBox(height: 4),
-                          Text('JPG or PNG  ·  Gallery or Camera',
-                              style: AppText.bodyXs),
-                        ],
+                        ),
                       ),
+                    ],
+                  ),
+                )
+                    : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 56, height: 56,
+                      decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          shape: BoxShape.circle),
+                      child: const Icon(Icons.upload_file_outlined,
+                          size: 28, color: AppColors.primary),
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Tap to select X-ray image',
+                        style: AppText.bodyMd.copyWith(color: AppColors.textSecondary)),
+                    const SizedBox(height: 4),
+                    Text('JPG or PNG  ·  Gallery or Camera', style: AppText.bodyXs),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
+
+            // ── Doctor selector (required) ────────────────────────────────
+            Consumer(
+              builder: (context, ref, _) {
+                final doctorsAsync = ref.watch(approvedDoctorsProvider);
+                return doctorsAsync.when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (e, _) => Text('Could not load doctors',
+                      style: AppText.bodySm.copyWith(color: AppColors.error)),
+                  data: (doctors) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        value: _selectedDoctorId,
+                        decoration: InputDecoration(
+                          labelText: 'Assign Doctor *',
+                          filled: true,
+                          fillColor: AppColors.surface,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: AppColors.border)),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                  color: _doctorError ? AppColors.error : AppColors.border)),
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+                          errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: AppColors.error)),
+                        ),
+                        hint: const Text('Select a doctor'),
+                        isExpanded: true,
+                        items: doctors.map((d) => DropdownMenuItem(
+                          value: d.userId,
+                          child: Text(
+                            '${d.fullName}${d.specialization != null ? ' - ${d.specialization}' : ''}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )).toList(),
+                        onChanged: isUploading
+                            ? null
+                            : (v) => setState(() {
+                          _selectedDoctorId = v;
+                          _doctorError = false;
+                        }),
+                      ),
+                      if (_doctorError) ...[
+                        const SizedBox(height: 4),
+                        const Text('Please select a doctor',
+                            style: TextStyle(color: AppColors.error, fontSize: 12)),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
 
             // ── Notes field ───────────────────────────────────────────────
             TextField(
@@ -270,18 +305,14 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
                 fillColor: AppColors.surface,
                 alignLabelWithHint: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppColors.border)),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppColors.border)),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide:
-                      const BorderSide(color: AppColors.primary, width: 2),
-                ),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2)),
               ),
             ),
             const SizedBox(height: 24),
@@ -294,8 +325,7 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
                   value: uploadState.progress > 0 ? uploadState.progress : null,
                   minHeight: 6,
                   backgroundColor: AppColors.border,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                 ),
               ),
               const SizedBox(height: 8),
@@ -321,14 +351,11 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline,
-                        color: AppColors.error, size: 18),
+                    const Icon(Icons.error_outline, color: AppColors.error, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(uploadState.message,
-                          style: AppText.bodySm.copyWith(
-                              color: AppColors.failedText)),
-                    ),
+                        child: Text(uploadState.message,
+                            style: AppText.bodySm.copyWith(color: AppColors.failedText))),
                   ],
                 ),
               ),
@@ -337,27 +364,31 @@ class _UploadXrayPageState extends ConsumerState<UploadXrayPage> {
 
             // ── Submit button ─────────────────────────────────────────────
             GradientButton(
-              label: isUploading ? 'Uploading...' : 'Analyze X-Ray',
+              label: isUploading ? 'Uploading...' : S.analyzeXray,
               icon: isUploading ? null : Icons.cloud_upload_outlined,
               isLoading: isUploading,
               onPressed: (_selectedFile == null || isUploading)
                   ? null
-                  : () => ref.read(xrayUploadProvider.notifier).upload(
-                        file: _selectedFile!,
-                        patientNotes: _notesController.text.trim().isEmpty
-                            ? null
-                            : _notesController.text.trim(),
-                      ),
+                  : () {
+                if (_selectedDoctorId == null) {
+                  setState(() => _doctorError = true);
+                  return;
+                }
+                ref.read(xrayUploadProvider.notifier).upload(
+                  file: _selectedFile!,
+                  patientNotes: _notesController.text.trim().isEmpty
+                      ? null
+                      : _notesController.text.trim(),
+                  assignedDoctorId: _selectedDoctorId,
+                );
+              },
             ),
 
             if (_selectedFile == null && !isUploading) ...[
               const SizedBox(height: 10),
               Center(
-                child: Text(
-                  'Select an X-ray image above to continue',
-                  style: AppText.bodySm,
-                ),
-              ),
+                  child: Text('Select an X-ray image above to continue',
+                      style: AppText.bodySm)),
             ],
             const SizedBox(height: 24),
           ],

@@ -119,7 +119,7 @@ flutter pub get
 ## Run the app
 
 ```bash
-flutter run
+flutter run --dart-define-from-file=env.json
 ```
 
 ---

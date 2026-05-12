@@ -94,15 +94,14 @@ class _BookAppointmentPageState extends ConsumerState<BookAppointmentPage> {
     final slot = _selectedSlot;
     if (doctor == null || date == null || slot == null) return;
 
-    final dateStr =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    // Формируем полный datetime: '2026-05-14T16:30:00'
+    final dateTimeStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}T${slot.start}:00';
 
     final request = BookAppointmentRequest(
       doctorId: doctor.userId,
-      appointmentDate: dateStr,
-      startTime: slot.start,
-      endTime: slot.end,
-      reason: _reasonController.text.trim().isEmpty
+      appointmentDateTime: dateTimeStr,
+      patientComplaints: _reasonController.text.trim().isEmpty
           ? null
           : _reasonController.text.trim(),
     );

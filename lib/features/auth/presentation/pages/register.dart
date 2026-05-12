@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/app_theme.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/api_paths.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/l10n/locale_provider.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -38,7 +40,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (_formKey.currentState?.validate() != true) return;
     FocusScope.of(context).unfocus();
     setState(() { _isLoading = true; _error = null; });
-
     try {
       final config = ref.read(envConfigProvider);
       final dio = Dio(BaseOptions(baseUrl: config.gatewayBaseUrl));
@@ -55,10 +56,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       FocusScope.of(context).unfocus();
       setState(() { _success = true; });
     } on DioException catch (e) {
-      final msg = e.response?.data?['message']
-          ?? e.response?.data?.toString()
-          ?? e.message
-          ?? 'Registration failed';
+      final msg = e.response?.data?['message'] ?? e.response?.data?.toString() ?? e.message ?? 'Registration failed';
       setState(() { _error = msg.toString(); });
     } catch (e) {
       setState(() { _error = e.toString(); });
@@ -69,7 +67,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = ref.watch(localeProvider);
+    S.setLocale(AppLocale.values.firstWhere(
+          (e) => e.name == locale.languageCode,
+      orElse: () => AppLocale.ru,
+    ));
+
     return Scaffold(
+      backgroundColor: const Color(0xFF0C1A2E),
       body: Container(
         decoration: const BoxDecoration(gradient: AppGradients.navy),
         child: SafeArea(
@@ -81,14 +86,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   const SizedBox(height: 56),
                   Container(
                     width: 72, height: 72,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
-                    ),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                    child: Padding(padding: const EdgeInsets.all(10), child: Image.asset('assets/images/logo.png', fit: BoxFit.contain)),
                   ),
                   const SizedBox(height: 20),
                   const Text('TynysAI', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white)),
@@ -101,8 +100,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   const SizedBox(height: 24),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Already have an account? Sign in',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
+                    child: Text(S.alreadyHaveAccount, style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -119,11 +117,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       children: [
         const Icon(Icons.check_circle_outline, color: Colors.green, size: 64),
         const SizedBox(height: 16),
-        Text('Registration successful!', style: AppText.displayMd),
+        Text(S.registrationSuccess, style: AppText.displayMd),
         const SizedBox(height: 8),
-        Text('You can now sign in with your credentials.', style: AppText.bodySm, textAlign: TextAlign.center),
+        Text(S.canSignIn, style: AppText.bodySm, textAlign: TextAlign.center),
         const SizedBox(height: 24),
-        GradientButton(label: 'Go to Login', onPressed: () => Navigator.pop(context)),
+        GradientButton(label: S.goToLogin, onPressed: () => Navigator.pop(context)),
       ],
     );
   }
@@ -134,43 +132,34 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Create account', style: AppText.displayMd),
+          Text(S.createAccount, style: AppText.displayMd),
           const SizedBox(height: 4),
-          Text('Register as a patient', style: AppText.bodySm),
+          Text(S.registerAsPatient, style: AppText.bodySm),
           const SizedBox(height: 24),
           TextFormField(
             controller: _firstNameController,
             keyboardType: TextInputType.name,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'First name',
-              prefixIcon: Icon(Icons.person_outline, size: 20),
-            ),
-            validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+            decoration: InputDecoration(labelText: S.firstName, prefixIcon: const Icon(Icons.person_outline, size: 20)),
+            validator: (v) => v == null || v.trim().isEmpty ? S.required : null,
           ),
           const SizedBox(height: 14),
           TextFormField(
             controller: _lastNameController,
             keyboardType: TextInputType.name,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Last name',
-              prefixIcon: Icon(Icons.person_outline, size: 20),
-            ),
-            validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+            decoration: InputDecoration(labelText: S.lastName, prefixIcon: const Icon(Icons.person_outline, size: 20)),
+            validator: (v) => v == null || v.trim().isEmpty ? S.required : null,
           ),
           const SizedBox(height: 14),
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              prefixIcon: Icon(Icons.email_outlined, size: 20),
-            ),
+            decoration: InputDecoration(labelText: S.email, prefixIcon: const Icon(Icons.email_outlined, size: 20)),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Required';
-              if (!v.contains('@')) return 'Enter a valid email';
+              if (v == null || v.trim().isEmpty) return S.emailRequired;
+              if (!v.contains('@')) return S.emailInvalid;
               return null;
             },
           ),
@@ -179,16 +168,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Phone number (optional)',
-              prefixIcon: Icon(Icons.phone_outlined, size: 20),
-              hintText: '+77001234567',
-            ),
+            decoration: InputDecoration(labelText: S.phoneOptional, prefixIcon: const Icon(Icons.phone_outlined, size: 20), hintText: '+77001234567'),
             validator: (v) {
               if (v == null || v.trim().isEmpty) return null;
-              if (!RegExp(r'^\+?[1-9]\d{6,14}$').hasMatch(v.trim())) {
-                return 'Invalid phone number';
-              }
+              if (!RegExp(r'^\+?[1-9]\d{6,14}$').hasMatch(v.trim())) return S.invalidPhone;
               return null;
             },
           ),
@@ -198,7 +181,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             obscureText: !_passwordVisible,
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
-              labelText: 'Password',
+              labelText: S.password,
               prefixIcon: const Icon(Icons.lock_outlined, size: 20),
               suffixIcon: IconButton(
                 icon: Icon(_passwordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
@@ -206,8 +189,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               ),
             ),
             validator: (v) {
-              if (v == null || v.isEmpty) return 'Required';
-              if (v.length < 6) return 'Min 6 characters';
+              if (v == null || v.isEmpty) return S.passwordRequired;
+              if (v.length < 6) return S.passwordMin;
               return null;
             },
             onFieldSubmitted: (_) => _submit(),
@@ -229,11 +212,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             ),
           ],
           const SizedBox(height: 24),
-          GradientButton(
-            label: 'Create Account',
-            isLoading: _isLoading,
-            onPressed: _isLoading ? null : _submit,
-          ),
+          GradientButton(label: S.createAccount, isLoading: _isLoading, onPressed: _isLoading ? null : _submit),
         ],
       ),
     );

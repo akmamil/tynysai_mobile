@@ -1,0 +1,7 @@
+{
+  "@@locale": "ru",
+  "signIn": "Войти",
+  "register": "Регистрация",
+  "email": "Email",
+  "password": "Пароль"
+}
